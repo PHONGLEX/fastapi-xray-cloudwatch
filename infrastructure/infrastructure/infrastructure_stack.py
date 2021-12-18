@@ -36,13 +36,30 @@ class InfrastructureStack(core.Stack):
                 "ecr:GetDownloadUrlForLayer",
                 "ecr:BatchGetImage",
                 "logs:CreateLogStream",
-                "logs:PutLogEvents"
+                "logs:PutLogEvents",
+                "ssm:AmazonSSMReadOnlyAccess",
+                "ecs:AmazonECSTaskExecutionRolePolicy",
+                "cloudwatch:CloudWatchAgentServerPolicy"                
+                ]
+        ))
+        
+        task_role = iam.Role(self, "ecs-devops-sandbox-task-role",
+                                  assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+                                  role_name="ecs-devops-sandbox-task-role")
+        
+        task_role.add_to_policy(iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            resources=["*"],
+            actions=[
+                "cloudwatch:CloudWatchAgentServerPolicy",
+                "xray:AWSXRayDaemonWriteAccess"              
                 ]
         ))
 
         task_definition = ecs.FargateTaskDefinition(self,
                                                     "ecs-devops-sandbox-task-definition",
                                                     execution_role=execution_role,
+                                                    task_role=task_role,
                                                     family="ecs-devops-sandbox-task-definition")
 
         container = task_definition.add_container(
