@@ -1,0 +1,67 @@
+{
+    "family": "ecs-devops-sandbox-task-definition",
+    "taskRoleArn": "",
+    "executionRoleArn": "arn:aws:iam::134477770615:role/ecs-devops-sandbox-execution-role",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+        {
+            "name": "ecs-devops-sandbox",
+            "image": "ecs-devops-sandbox-repository:00000",
+            "resourceRequirements": null,
+            "essential": true,
+            "portMappings": [
+                {
+                    "containerPort": "8000",
+                    "protocol": "tcp"
+                }
+                
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                  "awslogs-create-group": "True",
+                  "awslogs-group": "/ecs/ecs-cwagent-fargate",
+                  "awslogs-region": "us-east-2",
+                  "awslogs-stream-prefix": "ecs"
+                }
+            }
+        },
+        {
+            "name": "xray-daemon",
+            "image": "public.ecr.aws/xray/aws-xray-daemon:latest",
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                  "awslogs-create-group": "True",
+                  "awslogs-group": "/ecs/ecs-cwagent-fargate",
+                  "awslogs-region": "us-east-2",
+                  "awslogs-stream-prefix": "ecs"
+                }
+            }
+        },
+        {
+            "name": "cloudwatch-agent",
+            "image": "public.ecr.aws/cloudwatch-agent/cloudwatch-agent:latest",
+            "secrets": [
+                {
+                    "name": "CW_CONFIG_CONTENT",
+                    "valueFrom": "ecs-cwagent"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                  "awslogs-create-group": "True",
+                  "awslogs-group": "/ecs/ecs-cwagent-fargate",
+                  "awslogs-region": "us-east-2",
+                  "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "512",
+    "memory": "1024"
+}

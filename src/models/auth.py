@@ -1,0 +1,40 @@
+from celery.utils import deprecated
+from tortoise import Model, fields
+from tortoise.contrib.pydantic import pydantic_model_creator
+from passlib.context import CryptContext
+from pydantic import BaseModel
+
+pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
+
+
+class User(Model):
+    id = fields.IntField(pk=True, index=True)
+    email = fields.CharField(max_length=100, null=False, unique=True)
+    name = fields.CharField(max_length=100, null=False, unique=True)
+    password = fields.CharField(max_length=128)
+    is_staff = fields.BooleanField(default=False)
+    is_verified = fields.BooleanField(default=False)
+    is_active = fields.BooleanField(default=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+    
+    @classmethod
+    def get_hashed_password(cls, password):
+        return pwd_context.hash(password)
+    
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password)
+    
+    def set_password(self, password):
+        self.password = User.get_hashed_password(password)
+        
+        
+userRegister_pydantic = pydantic_model_creator(User, name="UserRegister", include=("email", "name", "password"))
+userLogin_pydantic = pydantic_model_creator(User, name="UserLogin", include=("email", "password"))
+userResetPassword_pydantic = pydantic_model_creator(User, name="UserResetPassword", include=("email",))
+
+
+class ResetPasswordModel(BaseModel):
+    uidb64: str
+    token: str
+    password: str
